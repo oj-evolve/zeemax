@@ -1,0 +1,10 @@
+# Prerequisites
+node_modules/
+
+# Specific ignores
+.DS_Store
+Thumbs.db
+
+# Ensure assets are tracked (remove any existing lines that ignore them)
+!assets/
+!assets/products/

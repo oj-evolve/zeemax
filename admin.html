@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Zeemax Admin - Price Manager</title>
-    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="./src/styles.css">
     <style>
         body { padding-top: 2rem !important; background: #f0f2f5; }
         .admin-wrap { max-width: 1100px; margin: 0 auto; padding: 20px; }
@@ -21,6 +21,57 @@
         .btn-save:hover { background: #2f855a; transform: translateY(-1px); }
         .btn-export { background: #3182ce; color: white; }
         .btn-export:hover { background: #2b6cb0; transform: translateY(-1px); }
+
+        /* Responsive Styles */
+        @media (max-width: 768px) {
+            .admin-header { 
+                flex-direction: column; 
+                align-items: stretch; 
+                text-align: center; 
+                gap: 1.5rem; 
+            }
+            .admin-btns { flex-direction: column; }
+            .btn { width: 100%; }
+            .admin-wrap { padding: 10px; }
+            .admin-table-container { padding: 12px; }
+            
+            /* Stacked Table Layout for Mobile */
+            table, thead, tbody, th, td, tr { display: block; }
+            thead tr { position: absolute; top: -9999px; left: -9999px; }
+            tr { 
+                border: 1px solid #e2e8f0; 
+                border-radius: 12px; 
+                margin-bottom: 1.5rem; 
+                background: white; 
+                overflow: hidden; 
+                box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+            }
+            td { 
+                border: none !important; 
+                border-bottom: 1px solid #edf2f7 !important; 
+                position: relative; 
+                padding: 12px 15px 12px 40% !important; 
+                text-align: right !important;
+                min-height: 48px;
+                width: auto !important;
+                display: flex;
+                align-items: center;
+                justify-content: flex-end;
+            }
+            td:last-child { border-bottom: none !important; }
+            td:before { 
+                content: attr(data-label); 
+                position: absolute; 
+                left: 15px; 
+                width: 35%; 
+                text-align: left; 
+                font-weight: 800; 
+                color: #718096;
+                font-size: 0.65rem;
+                text-transform: uppercase;
+                letter-spacing: 0.05em;
+            }
+        }
     </style>
 </head>
 <body>
@@ -50,6 +101,6 @@
             </table>
         </div>
     </div>
-    <script type="module" src="admin.js"></script>
+    <script type="module" src="./src/admin.js"></script>
 </body>
 </html>

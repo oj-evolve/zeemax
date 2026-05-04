@@ -2111,6 +2111,15 @@
      box-shadow: 0 12px 24px rgba(15, 76, 129, 0.16);
  }
 
+ .pagination-ellipsis {
+     display: flex;
+     align-items: center;
+     justify-content: center;
+     min-width: 44px;
+     color: var(--text-muted);
+     font-weight: 700;
+ }
+
  .quote-section {
      padding-bottom: 3rem;
  }

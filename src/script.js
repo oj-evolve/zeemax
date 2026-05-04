@@ -18,7 +18,8 @@ const productState = {
     selectedProductName: '',
     pageSearchTerm: '',
     activeCategory: 'All Categories',
-    currentPage: 1
+    currentPage: 1,
+    homeCurrentPage: 1
 };
 
 const pageConfig = {
@@ -141,7 +142,7 @@ function createCard(product) {
             </div>
             <div class="card-content">
                 <h3 class="product-name">${product.name}</h3>
-                <p class="product-description">${product.description}</p>
+                <p class="product-description">${product.description || 'No description available for this industrial chemical.'}</p>
                 <div class="product-meta">
                     <div class="meta-item">
                         <span class="meta-label">Packaging</span>
@@ -273,29 +274,95 @@ function renderHomeCategorySidebar() {
     categoryList.innerHTML = buildHomeCategoryMarkup();
 }
 
+function getPaginationRange(current, total) {
+    const delta = 1;
+    const range = [];
+    const rangeWithDots = [];
+    let l;
+
+    range.push(1);
+    for (let i = current - delta; i <= current + delta; i++) {
+        if (i < total && i > 1) {
+            range.push(i);
+        }
+    }
+    if (total > 1) range.push(total);
+
+    for (let i of range) {
+        if (l) {
+            if (i - l === 2) {
+                rangeWithDots.push(l + 1);
+            } else if (i - l !== 1) {
+                rangeWithDots.push('...');
+            }
+        }
+        rangeWithDots.push(i);
+        l = i;
+    }
+    return rangeWithDots;
+}
+
+function renderHomePagination(totalItems, itemsPerPage) {
+    const pagination = document.getElementById('home-pagination');
+    if (!pagination) return;
+
+    const totalPages = Math.ceil(totalItems / itemsPerPage);
+    if (totalPages <= 1) {
+        pagination.innerHTML = '';
+        return;
+    }
+
+    const range = getPaginationRange(productState.homeCurrentPage, totalPages);
+    pagination.innerHTML = range.map(p => p === '...' 
+        ? `<span class="pagination-ellipsis">...</span>`
+        : `<button type="button" class="pagination-button ${productState.homeCurrentPage === p ? 'is-active' : ''}" data-home-page="${p}">${p}</button>`
+    ).join('');
+}
+
+function renderProductsPagination(totalItems, itemsPerPage) {
+    const pagination = document.getElementById('products-pagination');
+    if (!pagination) return;
+
+    const totalPages = Math.ceil(totalItems / itemsPerPage);
+    if (totalPages <= 1) {
+        pagination.innerHTML = '';
+        return;
+    }
+
+    const range = getPaginationRange(productState.currentPage, totalPages);
+    pagination.innerHTML = range.map(p => p === '...' 
+        ? `<span class="pagination-ellipsis">...</span>`
+        : `<button type="button" class="pagination-button ${productState.currentPage === p ? 'is-active' : ''}" data-page="${p}">${p}</button>`
+    ).join('');
+}
+
 function renderHomeCatalog() {
     if (!pageConfig.isHomePage) return;
 
     const searchInput = document.getElementById('search-input');
     const searchTerm = searchInput ? searchInput.value.trim() : '';
     const matchingProducts = getProductMatches(searchTerm);
-    
-    let homeProducts;
+    const isMobile = window.innerWidth <= 768;
+    const itemsPerPage = isMobile ? 7 : 12;
+
+    let pool;
     if (searchTerm) {
-        homeProducts = matchingProducts;
+        pool = matchingProducts;
     } else {
-        // Generate a daily seed based on the date string
         const todaySeed = new Date().toDateString();
         let hash = 0;
         for (let i = 0; i < todaySeed.length; i++) hash += todaySeed.charCodeAt(i);
-        
-        homeProducts = [...chemicalProducts]
+        pool = [...chemicalProducts]
             .sort((a, b) => Math.sin(hash + a.name.length) - Math.sin(hash + b.name.length))
             .slice(0, homeFeaturedLimit);
     }
 
+    const startIndex = (productState.homeCurrentPage - 1) * itemsPerPage;
+    const homeProducts = pool.slice(startIndex, startIndex + itemsPerPage);
+
     productState.selectedProductName = '';
     renderProducts(homeProducts);
+    renderHomePagination(pool.length, itemsPerPage);
 }
 
 function setupHomeSearch() {
@@ -326,6 +393,7 @@ function setupHomeSearch() {
 
         searchInput.addEventListener('input', () => {
             productState.selectedProductName = '';
+            productState.homeCurrentPage = 1;
             syncSearchInputs(searchInput.value, 'desktop');
             renderHomeCatalog();
             updateSuggestions(searchInput.value, suggestionsBox, searchForm);
@@ -381,6 +449,7 @@ function setupHomeSearch() {
 
         mobileSearchInput.addEventListener('input', () => {
             productState.selectedProductName = '';
+            productState.homeCurrentPage = 1;
             syncSearchInputs(mobileSearchInput.value, 'mobile');
             renderHomeCatalog();
             updateSuggestions(mobileSearchInput.value, mobileSuggestionsBox, mobileSearchForm, 6);
@@ -423,6 +492,19 @@ function setupHomeSearch() {
             }
         });
     }
+
+    const homePagination = document.getElementById('home-pagination');
+    if (homePagination) {
+        homePagination.addEventListener('click', event => {
+            const trigger = event.target.closest('[data-home-page]');
+            if (!trigger) return;
+
+            productState.homeCurrentPage = Number(trigger.dataset.homePage);
+            renderHomeCatalog();
+            const grid = document.getElementById('product-grid');
+            if (grid) grid.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        });
+    }
 }
 
 function renderProductsCategoryList() {
@@ -453,23 +535,22 @@ function renderProductsPageCatalog() {
     if (!pageConfig.isProductsPage) return;
 
     const resultsCount = document.getElementById('products-results-count');
-    const pagination = document.getElementById('products-pagination');
     const filteredProducts = filterProducts({
         searchTerm: productState.pageSearchTerm,
         category: productState.activeCategory
     });
 
+    const isMobile = window.innerWidth <= 768;
+    const itemsPerPage = isMobile ? 10 : 12;
+    const startIndex = (productState.currentPage - 1) * itemsPerPage;
+    const paginatedProducts = filteredProducts.slice(startIndex, startIndex + itemsPerPage);
+
     if (resultsCount) {
         resultsCount.textContent = `${filteredProducts.length} product${filteredProducts.length === 1 ? '' : 's'} available`;
     }
 
-    // Display all products without pagination
-    renderProducts(filteredProducts, '#products-page-grid');
-
-    if (pagination) {
-        pagination.innerHTML = '';
-    }
-
+    renderProducts(paginatedProducts, '#products-page-grid');
+    renderProductsPagination(filteredProducts.length, itemsPerPage);
     renderProductsCategoryList();
 }
 

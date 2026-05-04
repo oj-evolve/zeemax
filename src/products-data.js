@@ -1,4 +1,4 @@
-export const homeFeaturedLimit = 21;
+export const homeFeaturedLimit = 70;
 
 export const chemicalProducts = [
     {
